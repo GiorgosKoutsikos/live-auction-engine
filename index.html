@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Live Auction Engine</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .card {
+        background: #1e293b;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        width: 360px;
+        text-align: center;
+      }
+      h1 {
+        margin-top: 0;
+        font-size: 1.4rem;
+        color: #38bdf8;
+      }
+      .price {
+        font-size: 2.2rem;
+        font-weight: bold;
+        margin: 1.5rem 0;
+        color: #4ade80;
+      }
+      input {
+        width: 90%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #fff;
+      }
+      button {
+        width: 96%;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        background: #2563eb;
+        color: #fff;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #1d4ed8;
+      }
+      .status {
+        margin-top: 15px;
+        font-size: 0.85rem;
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1 id="title">Loading auction...</h1>
+      <div class="price" id="price">-- €</div>
+      <p id="top-bidder" style="color: #cbd5e1; font-size: 0.9rem">
+        No bids yet
+      </p>
+
+      <input
+        type="text"
+        id="bidderName"
+        placeholder="Your name (e.g. George)"
+      />
+      <input type="number" id="bidAmount" placeholder="Bid amount (€)" />
+      <button onclick="sendBid()">Place Bid</button>
+
+      <div class="status" id="status">Connecting to WebSocket...</div>
+    </div>
+
+    <script>
+      const ws = new WebSocket(`ws://${location.host}/ws`);
+      const titleEl = document.getElementById('title');
+      const priceEl = document.getElementById('price');
+      const bidderEl = document.getElementById('top-bidder');
+      const statusEl = document.getElementById('status');
+
+      ws.onopen = () => {
+        statusEl.textContent = '🟢 Live WebSocket Connected';
+        statusEl.style.color = '#4ade80';
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.event === 'init') {
+          titleEl.textContent = data.auction.title;
+          priceEl.textContent = `${data.auction.current_price} €`;
+        } else if (data.event === 'new_bid') {
+          priceEl.textContent = `${data.current_price} €`;
+          bidderEl.textContent = `Highest bidder: ${data.bidder}`;
+        }
+      };
+
+      function sendBid() {
+        const bidder = document.getElementById('bidderName').value;
+        const amount = document.getElementById('bidAmount').value;
+        if (!bidder || !amount) return alert('Please enter name and amount!');
+
+        ws.send(
+          JSON.stringify({
+            auction_id: 1,
+            bidder: bidder,
+            amount: parseFloat(amount),
+          }),
+        );
+        document.getElementById('bidAmount').value = '';
+      }
+    </script>
+  </body>
+</html>

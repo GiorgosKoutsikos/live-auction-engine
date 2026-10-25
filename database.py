@@ -74,3 +74,5 @@ def get_auction(auction_id):
           "status": row[4]
       }
     return None
+
+create_auction("Mechanical Keyboard", 50.0)
